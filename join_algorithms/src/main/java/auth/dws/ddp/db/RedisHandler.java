@@ -21,14 +21,15 @@ public class RedisHandler implements DBInterface{
     }
 
     @Override
-    public List<String> getKeys(String pattern) {
+    public List<String> getKeys() {
+        //https://redis.io/commands/scan/
+        //https://www.programcreek.com/java-api-examples/?class=redis.clients.jedis.Jedis&method=scan
         List<String> keys = new ArrayList<>();
         String cursor = "0";
         ScanParams sp = new ScanParams();
+        // fetch keys using a pattern
         //sp.match("*" + pattern + "*");
-        //sp.count(1);
-        //https://www.programcreek.com/java-api-examples/?class=redis.clients.jedis.Jedis&method=scan
-        //https://redis.io/commands/scan/
+
         do {
             ScanResult<String> res = redis.scan(cursor, sp);
             List<String> result = res.getResult();
@@ -38,6 +39,13 @@ public class RedisHandler implements DBInterface{
             cursor = res.getCursor();
         } while (!cursor.equals("0"));
         return keys;
+    }
+
+    public ScanResult<String> scan(String cursor) {
+        ScanParams sp = new ScanParams();
+        sp.count(2);
+
+        return redis.scan(cursor, sp);
     }
 
     @Override
