@@ -1,7 +1,7 @@
 package auth.dws.ddp.db;
 
 import auth.dws.ddp.db.DBInterface;
-import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPooled;
 import redis.clients.jedis.params.ScanParams;
 import redis.clients.jedis.resps.ScanResult;
 
@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RedisHandler implements DBInterface{
-    private Jedis redis;
+    private JedisPooled redis;
 
     public RedisHandler(String url, int port) {
-        redis = new Jedis(url, port);
+        redis = new JedisPooled(url, port);
     }
 
     @Override
@@ -61,11 +61,6 @@ public class RedisHandler implements DBInterface{
     @Override
     public void delData(String key) {
         redis.del(key);
-    }
-
-    @Override
-    public void flushData() {
-        redis.flushDB();
     }
 
     @Override

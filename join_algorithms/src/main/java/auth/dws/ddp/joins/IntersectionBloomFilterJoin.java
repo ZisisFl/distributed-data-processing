@@ -17,6 +17,8 @@ public class IntersectionBloomFilterJoin {
         RedisHandler redis1 = new RedisHandler("localhost", 5555);
         RedisHandler redis2 = new RedisHandler("localhost", 6666);
 
+        long startTime = System.currentTimeMillis();
+
         List<String> keys1 = redis1.getKeys();
         List<String> keys2 = redis2.getKeys();
         List<String> unionOfKeys = getUnionOfKeys(keys1, keys2);
@@ -24,6 +26,11 @@ public class IntersectionBloomFilterJoin {
         BloomFilter<String> intersectionBF = generateIntersectionBF(keys1, keys2);
 
         intersectionBFJoin(intersectionBF, unionOfKeys, redis1, redis2);
+
+        System.out.println("Execution time: " + (System.currentTimeMillis() - startTime) + " ms");
+
+        redis1.close();
+        redis2.close();
     }
 
     public static void intersectionBFJoin(BloomFilter<String> intersectionBF, List<String> unionOfKeys, RedisHandler redis1, RedisHandler redis2) {
@@ -41,6 +48,7 @@ public class IntersectionBloomFilterJoin {
     }
 
     public static BloomFilter<String> createBloomFilter(List<String> keysList) {
+        // create bloom filter from relation's keys
         BloomFilter<String> bloomFilter = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8),100, 0.03);
         for (String key : keysList) {
             bloomFilter.put(key);
@@ -56,6 +64,7 @@ public class IntersectionBloomFilterJoin {
 
         BloomFilter<String> intersectionBF = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 100, 0.03);
 
+        // populate intersection bloom filter by finding common keys between each key set and the bloom filter of the other relation
         findPossibleCommonElements(keys1, bf2, intersectionBF);
         findPossibleCommonElements(keys2, bf1, intersectionBF);
 

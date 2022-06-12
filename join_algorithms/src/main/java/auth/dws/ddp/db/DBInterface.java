@@ -12,7 +12,6 @@ public interface DBInterface {
     Long getNumberOfKeys();
     void putData(String key, String value);
     void delData(String key);
-    void flushData();
     void close();
 
 }

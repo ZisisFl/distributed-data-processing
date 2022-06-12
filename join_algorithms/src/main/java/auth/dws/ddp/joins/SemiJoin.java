@@ -2,7 +2,6 @@ package auth.dws.ddp.joins;
 
 import auth.dws.ddp.db.RedisHandler;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SemiJoin {
@@ -10,9 +9,16 @@ public class SemiJoin {
         RedisHandler redis1 = new RedisHandler("localhost", 5555);
         RedisHandler redis2 = new RedisHandler("localhost", 6666);
 
+        long startTime = System.currentTimeMillis();
+
         List<String> keysOfSmallRelation = getKeysOfSmallRelation(redis1, redis2);
 
         semiJoin(keysOfSmallRelation, redis1, redis2);
+
+        System.out.println("Execution time: " + (System.currentTimeMillis() - startTime) + " ms");
+
+        redis1.close();
+        redis2.close();
     }
 
     public static void semiJoin(List<String> keysOfSmallRelation, RedisHandler redis1, RedisHandler redis2) {
@@ -24,10 +30,6 @@ public class SemiJoin {
 
             // if key exists in both relations join them
             if (v1 != null && v2 != null) {
-                // create list of values
-                List<String> values = new ArrayList<>();
-                values.add(v1);
-                values.add(v2);
 
                 System.out.printf("%s: (%s, %s)%n", key, v1, v2);
             }
