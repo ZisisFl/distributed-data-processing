@@ -3,7 +3,6 @@ package auth.dws.ddp.joins;
 import auth.dws.ddp.db.RedisHandler;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class SemiJoin {
@@ -12,30 +11,27 @@ public class SemiJoin {
         RedisHandler redis2 = new RedisHandler("localhost", 6666);
 
         List<String> keysOfSmallRelation = getKeysOfSmallRelation(redis1, redis2);
-        System.out.println(keysOfSmallRelation);
 
-        // init HashMap to store results of joins
-        HashMap<String, List<String>> joinResult = new HashMap<String, List<String>>();
+        semiJoin(keysOfSmallRelation, redis1, redis2);
+    }
 
+    public static void semiJoin(List<String> keysOfSmallRelation, RedisHandler redis1, RedisHandler redis2) {
         // for each key in the small relation
         for (String key : keysOfSmallRelation) {
             // try to fetch value for each key
-            String redis1_value = redis1.getData(key);
-            String redis2_value = redis2.getData(key);
+            String v1 = redis1.getData(key);
+            String v2 = redis2.getData(key);
 
             // if key exists in both relations join them
-            if (redis1_value != null && redis2_value != null) {
+            if (v1 != null && v2 != null) {
                 // create list of values
                 List<String> values = new ArrayList<>();
-                values.add(redis1_value);
-                values.add(redis2_value);
+                values.add(v1);
+                values.add(v2);
 
-                // add key value result in Hashmap
-                joinResult.put(key, values);
+                System.out.printf("%s: (%s, %s)%n", key, v1, v2);
             }
         }
-        System.out.println("Result of join:");
-        System.out.println(joinResult);
     }
 
     public static List<String> getKeysOfSmallRelation(RedisHandler redis1, RedisHandler redis2) {
