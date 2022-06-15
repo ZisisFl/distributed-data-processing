@@ -11,6 +11,7 @@ public class SemiJoin {
 
         long startTime = System.currentTimeMillis();
 
+        // get keys of the small relation
         List<String> keysOfSmallRelation = getKeysOfSmallRelation(redis1, redis2);
 
         semiJoin(keysOfSmallRelation, redis1, redis2);
@@ -37,11 +38,13 @@ public class SemiJoin {
     }
 
     public static List<String> getKeysOfSmallRelation(RedisHandler redis1, RedisHandler redis2) {
+        // get number of keys from both relations
         Long n_redis1_keys = redis1.getNumberOfKeys();
         Long n_redis2_keys = redis2.getNumberOfKeys();
 
         List<String> keysOfSmallRelation;
 
+        // return keys of the smallest one
         if (n_redis1_keys > n_redis2_keys){
             keysOfSmallRelation = redis2.getKeys();
         }

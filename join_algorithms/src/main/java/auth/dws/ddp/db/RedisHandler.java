@@ -23,7 +23,6 @@ public class RedisHandler implements DBInterface{
     @Override
     public List<String> getKeys() {
         //https://redis.io/commands/scan/
-        //https://www.programcreek.com/java-api-examples/?class=redis.clients.jedis.Jedis&method=scan
         List<String> keys = new ArrayList<>();
         String cursor = "0";
         ScanParams sp = new ScanParams();
