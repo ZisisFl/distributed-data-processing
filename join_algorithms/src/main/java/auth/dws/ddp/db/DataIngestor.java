@@ -3,15 +3,29 @@ package auth.dws.ddp.db;
 import java.util.*;
 
 public class DataIngestor {
-    public static void main(String[] args) {
-        RedisHandler redis1 = new RedisHandler("localhost", 5555);
-        RedisHandler redis2 = new RedisHandler("localhost", 6666);
+    final static String envDataIngestionMethod = "DATA_INGESTION_METHOD";
+    public static void main(String[] args) throws Exception {
+        RedisConnectionConfig redisConnectionConfig = new RedisConnectionConfig();
+        RedisHandler redis1 = new RedisHandler(redisConnectionConfig.redis1Host, redisConnectionConfig.redis1Port);
+        RedisHandler redis2 = new RedisHandler(redisConnectionConfig.redis2Host, redisConnectionConfig.redis2Port);
 
-        // populate key stores with specific keys (and random values)
-        populateWithFixedKeys(redis1, redis2);
+        String dataIngestionMethod = (System.getenv(envDataIngestionMethod) != null) ? System.getenv(envDataIngestionMethod) : "populateWithFixedKeys";
 
-        // populate each redis store with 1000 random key value pairs
-        //populateWithRandomData(redis1, redis2);
+        if (Objects.equals(dataIngestionMethod, "populateWithFixedKeys")){
+            // populate key stores with specific keys (and random values)
+            System.out.println("Populating Redis stores with specific keys");
+            populateWithFixedKeys(redis1, redis2);
+        }
+        else if (Objects.equals(dataIngestionMethod, "populateWithRandomKeys")) {
+            // populate each redis store with 10000 random key-value pairs
+            System.out.println("Populating each Redis store with 10000 key-value pairs");
+            populateWithRandomKeys(redis1, redis2);
+        }
+        else {
+            throw new Exception("Unknown data ingestion method it can be either populateWithFixedKeys or populateWithRandomKeys");
+        }
+
+        System.out.println("Data ingested successfully");
 
         redis1.close();
         redis2.close();
@@ -36,21 +50,21 @@ public class DataIngestor {
         }
     }
 
-    public static void populateWithRandomData(RedisHandler redis1, RedisHandler redis2) {
+    public static void populateWithRandomKeys(RedisHandler redis1, RedisHandler redis2) {
         List<String> keys = new ArrayList<>();
 
-        // generate a list of 10k keys
-        int numberOfRecords = 10000;
+        // generate a list of 50k keys
+        int numberOfRecords = 50000;
         for (int i=1;i<=numberOfRecords;i++) {
             keys.add("key_" + i);
         }
 
-        // shuffle them and get put 1000 of them in redis
+        // shuffle them and put 10000 of them in redis
         Collections.shuffle(keys);
-        generateKeyValuesPairFromList(redis1, keys.subList(0, 1000));
+        generateKeyValuesPairFromList(redis1, keys.subList(0, 10000));
 
-        // shuffle them again and get put 1000 of them in redis
+        // shuffle them again and put 10000 of them in the other redis store
         Collections.shuffle(keys);
-        generateKeyValuesPairFromList(redis2, keys.subList(0, 1000));
+        generateKeyValuesPairFromList(redis2, keys.subList(0, 10000));
     }
 }

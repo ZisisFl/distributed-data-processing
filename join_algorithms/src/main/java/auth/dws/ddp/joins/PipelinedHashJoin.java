@@ -1,5 +1,6 @@
 package auth.dws.ddp.joins;
 
+import auth.dws.ddp.db.RedisConnectionConfig;
 import auth.dws.ddp.db.RedisHandler;
 import auth.dws.ddp.joins.utlis.LatestKeyValuePair;
 import auth.dws.ddp.joins.utlis.Relation;
@@ -12,8 +13,9 @@ import java.util.Iterator;
 public class PipelinedHashJoin {
 
     public static void main(String[] args) {
-        RedisHandler redis1 = new RedisHandler("localhost", 5555);
-        RedisHandler redis2 = new RedisHandler("localhost", 6666);
+        RedisConnectionConfig redisConnectionConfig = new RedisConnectionConfig();
+        RedisHandler redis1 = new RedisHandler(redisConnectionConfig.redis1Host, redisConnectionConfig.redis1Port);
+        RedisHandler redis2 = new RedisHandler(redisConnectionConfig.redis2Host, redisConnectionConfig.redis2Port);
 
         long startTime = System.currentTimeMillis();
 
