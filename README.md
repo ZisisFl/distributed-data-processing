@@ -1,11 +1,14 @@
 # Join Algorithms
-This project is about the implementation of three different join algorithms over key-value pairs stored in two different Redis databases. The join algorithms are implemented in Java. The deployment of the Redis database can be achieved with the use of docker-compose provided while there is also a Docker image to deploy join operations os Docker containers.
+This project is about the implementation of three different join algorithms over key-value pairs stored in two different Redis databases. The join algorithms are implemented in Java. The deployment of the Redis stores can be achieved with the use of docker-compose provided while there is also a Docker image to deploy join operations as Docker containers.
 
 ## Pipelined Hash Join
+Pipelined Hash Join is a join algorithm that can work in streaming fashion as it starts consuming tuples from each relation one at the time and build join pairs in the process. It constructs one hash table for each relation that it has to join. For each tuple consumed it updates the hash table of that relation and probes to the hash table of the other in order to find possible join pair.
 
 ## Semi Join
+Semi Join is a special case of join as we first identify which one of the two is the smallest relation (in terms of tuples count) and then we take its keys to send them to the bigger one. For each key of the small one we probe the bigger relation in order to find the join pairs.
 
 ## Intersection Bloom Filter Join
+Intersection Bloom Filter Join is a join algorithm that makes use of bloom filters in order to exclude checking some of the join key-pairs. It achieves that by creating a bloom filter for each relation using their join keys, to finally construct the intersection of those bloom filters. Each key that doesn't appear in the intersection bloom filter is not a join candidate while the ones that appear need to be checked because they might produce a join pair.
 
 # Dependencies
 This project makes use of some external libraries such as [jedis](https://github.com/redis/jedis) which is a java client for Redis and [guava](https://github.com/google/guava) library which provides an implementation of [BloomFilter](https://guava.dev/releases/20.0/api/docs/com/google/common/hash/BloomFilter.html). You can find the specific dependencies in the pom.xml file of the maven project.
@@ -20,21 +23,39 @@ docker-compose up
 By default redis1 service will start at port `5555` and redis2 at port `6666`. 
 
 #### Note
-If you need to change these ports edit ports sections of both redis1 and redis2 services in the docker-compose file. Keep in mind though that if you want to run the code from your computer and not through a docker container these ports are defaults in the `auth.dws.dpp.db.RedisConnectionConfig` class which is used to establish the connection.
+If you need to change these ports, edit ports sections of both redis1 and redis2 services in the docker-compose file. Keep in mind though that if you want to run the code from your computer and not through a docker container these ports are defaults in the `auth.dws.dpp.db.RedisConnectionConfig` class which is used to establish the connection with Redis stores.
 
 ## Performing Join operations
-You can use this project either by running the code through your IDE or by deploying docker containers of a custom image created.
+You can use this project either by running the code through your IDE or by deploying docker containers of a custom image provided.
 
 ### Docker image
-In order to build the docker image use the following command:
+In order to build the docker image navigate to the `join_algorithms` directory of the project and use the following command:
 ```docker
 docker build -t join-algos:0.1 .
 ```
 
-### Ingesting key-value pairs to Redis
-The first step required before performing the join operations between the two Redis stores is to populate them with actual key-value pairs. This can be done with many different ways. In this project there are two methods dedicated to this purpose.
+### Docker containers
+Other than environmental variables that are required for data ingestion and join operations there are four default variables that use must provide each time that needs to deploy a docker container. Those variables are:
+- REDIS1_HOST: Host of redis1 service, in this case that containers are meant to be deployed in the same bridge network it can be the name of the service 
+- REDIS2_HOST: Host of redis2 service
+- REDIS1_PORT: Port of redis1 service
+- REDIS2_PORT: Port of redis2 service
 
-The class `auth/dws/ddp/db/DataIngestor.java` provides populateWithFixedKeys method which stores ["key_1", "key_2", "key_3", "key_4", "key_6"] keys in redis1 store and ["key_1", "key_2", "key_3", "key_5", "key_6", "key_7", "key_8", "key_9", key_10"] in redis2 store. This method was used primarly to develop the algorithms providing an easy way to check the join results. The other method provided is called populateWithRandomKeys which creates a pool of 50k keys and for each Redis store randomly picks 10k of them and ingests them.
+In the next sections there will be example of docker container deployments.
+
+
+### Ingesting key-value pairs to Redis
+The first step required before performing the join operations between the two Redis stores is to populate them with actual key-value pairs. This can be done with many different ways. In this project there are two methods dedicated to this purpose. Both keys and values are expected to be of type string.
+
+The class `auth/dws/ddp/db/DataIngestor.java` provides populateWithFixedKeys method which stores 
+```json
+["key_1", "key_2", "key_3", "key_4", "key_6"]
+``` 
+keys in redis1 store and 
+```json
+["key_1", "key_2", "key_3", "key_5", "key_6", "key_7", "key_8", "key_9", "key_10"]
+```
+ in redis2 store in both cases generating random values. This method was used primarly to develop the algorithms providing an easy way to check the join results. The other method provided is called populateWithRandomKeys which creates a pool of 50k keys and for each Redis store randomly picks 10k of them and ingests them with random values.
 
 To perform data ingestion using the docker image created above the user can select the ingestion method by providing the appropriate value for the env variable `DATA_INGESTION_METHOD`.
 
@@ -56,24 +77,29 @@ docker run --name join-algos --network=redis-network -e REDIS1_HOST=redis1 -e RE
 As long as the user has built the docker image he/she can use it to perform join operation. The container is flexibly enough in terms of configuration to provide the ability to ingest data and perform a single join operation in a sinlge container deployment. This means that the user has to provide both a valid `JOIN_METHOD` and a valid `DATA_INGESTION_METHOD` through environmental variables when running the container.
 
 #### Note1
-Ingesting data to the Redis stores using the project provided methods will only upsert key-value pairs. The Redis stores are not truncated at each run of the algorithm.
+Ingesting data to the Redis stores using the project provided methods will only upsert key-value pairs. The Redis stores **are not truncated** at each run of the algorithm.
 
 Valid values of `JOIN_METHOD` are:
 - semiJoin
 - pipelinedHashJoin
 - intersectionBloomFilterJoin
 
+#### Semi Join
 Example of ingesting data using populateWithRandomKeys methods and performing join with semiJoin method:
 ```docker
 docker run --name join-algos --network=redis-network -e REDIS1_HOST=redis1 -e REDIS2_HOST=redis2 -e REDIS1_PORT=6379 -e REDIS2_PORT=6379 -e JOIN_METHOD=semiJoin -e DATA_INGESTION_METHOD=populateWithRandomKeys join-algos:0.1
 ```
 
-Pipelined Hash Join without data ingestion:
+#### Pipelined Hash Join  
+In the case of Pipelined Hash Join a environmental variable can regulate from which relation should the algorithm start reading from. The variable is named `PHJStartFrom` and its valid values are relation1 and relation2 in order to start reading from the respective relation. If `PHJStartFrom` is not provided it defaults to relation1.
+
+Example of performing pipelinedHashJoin without data ingestion and providing `PHJStartFrom` variable:
 ```docker
-docker run --name join-algos --network=redis-network -e REDIS1_HOST=redis1 -e REDIS2_HOST=redis2 -e REDIS1_PORT=6379 -e REDIS2_PORT=6379 -e JOIN_METHOD=pipelinedHashJoin join-algos:0.1
+docker run --name join-algos --network=redis-network -e REDIS1_HOST=redis1 -e REDIS2_HOST=redis2 -e REDIS1_PORT=6379 -e REDIS2_PORT=6379 -e JOIN_METHOD=pipelinedHashJoin -e PHJStartFrom=relation2 join-algos:0.1
 ```
 
-Intersection BloomFilter Join without data ingestion:
+#### Intersection Bloom Filter Join
+Example of performing intersectionBloomFilterJoin without data ingestion:
 ```docker
 docker run --name join-algos --network=redis-network -e REDIS1_HOST=redis1 -e REDIS2_HOST=redis2 -e REDIS1_PORT=6379 -e REDIS2_PORT=6379 -e JOIN_METHOD=intersectionBloomFilterJoin join-algos:0.1
 ```
