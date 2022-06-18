@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class IntersectionBloomFilterJoin {
-
     public static void main(String[] args) {
         RedisConnectionConfig redisConnectionConfig = new RedisConnectionConfig();
         RedisHandler redis1 = new RedisHandler(redisConnectionConfig.redis1Host, redisConnectionConfig.redis1Port);
@@ -21,6 +20,15 @@ public class IntersectionBloomFilterJoin {
 
         long startTime = System.currentTimeMillis();
 
+        intersectionBFJoin(redis1, redis2);
+
+        System.out.println("Execution time: " + (System.currentTimeMillis() - startTime) + " ms");
+
+        redis1.close();
+        redis2.close();
+    }
+
+    public static void intersectionBFJoin(RedisHandler redis1, RedisHandler redis2) {
         // get keys of both relations
         List<String> keys1 = redis1.getKeys();
         List<String> keys2 = redis2.getKeys();
@@ -36,15 +44,6 @@ public class IntersectionBloomFilterJoin {
 
         BloomFilter<String> intersectionBF = generateIntersectionBF(keys1, keys2, bf1Config, bf2Config, intersectionBFConfig);
 
-        intersectionBFJoin(intersectionBF, unionOfKeys, redis1, redis2);
-
-        System.out.println("Execution time: " + (System.currentTimeMillis() - startTime) + " ms");
-
-        redis1.close();
-        redis2.close();
-    }
-
-    public static void intersectionBFJoin(BloomFilter<String> intersectionBF, List<String> unionOfKeys, RedisHandler redis1, RedisHandler redis2) {
         // for each key from the union of keys check if key exists in intersection bloom filter
         for (String key : unionOfKeys) {
             if (intersectionBF.mightContain(key)) {

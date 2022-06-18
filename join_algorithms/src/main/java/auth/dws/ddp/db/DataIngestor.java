@@ -9,6 +9,13 @@ public class DataIngestor {
         RedisHandler redis1 = new RedisHandler(redisConnectionConfig.redis1Host, redisConnectionConfig.redis1Port);
         RedisHandler redis2 = new RedisHandler(redisConnectionConfig.redis2Host, redisConnectionConfig.redis2Port);
 
+        ingestData(redis1, redis2);
+
+        redis1.close();
+        redis2.close();
+    }
+
+    public static void ingestData(RedisHandler redis1, RedisHandler redis2) throws Exception {
         String dataIngestionMethod = (System.getenv(envDataIngestionMethod) != null) ? System.getenv(envDataIngestionMethod) : "populateWithFixedKeys";
 
         if (Objects.equals(dataIngestionMethod, "populateWithFixedKeys")){
@@ -26,9 +33,6 @@ public class DataIngestor {
         }
 
         System.out.println("Data ingested successfully");
-
-        redis1.close();
-        redis2.close();
     }
 
     public static void populateWithFixedKeys(RedisHandler redis1, RedisHandler redis2) {

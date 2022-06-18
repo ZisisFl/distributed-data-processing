@@ -46,7 +46,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>auth.dws.ddp.db.DataIngestor</mainClass>
+                            <mainClass>auth.dws.ddp.EntryPoint</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

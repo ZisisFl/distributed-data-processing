@@ -13,10 +13,7 @@ public class SemiJoin {
 
         long startTime = System.currentTimeMillis();
 
-        // get keys of the small relation
-        List<String> keysOfSmallRelation = getKeysOfSmallRelation(redis1, redis2);
-
-        semiJoin(keysOfSmallRelation, redis1, redis2);
+        semiJoin(redis1, redis2);
 
         System.out.println("Execution time: " + (System.currentTimeMillis() - startTime) + " ms");
 
@@ -24,7 +21,10 @@ public class SemiJoin {
         redis2.close();
     }
 
-    public static void semiJoin(List<String> keysOfSmallRelation, RedisHandler redis1, RedisHandler redis2) {
+    public static void semiJoin(RedisHandler redis1, RedisHandler redis2) {
+        // get keys of the small relation
+        List<String> keysOfSmallRelation = getKeysOfSmallRelation(redis1, redis2);
+
         // for each key in the small relation
         for (String key : keysOfSmallRelation) {
             // try to fetch value for each key
