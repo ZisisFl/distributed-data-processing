@@ -38,12 +38,15 @@ public class EntryPoint {
                 case "intersectionBloomFilterJoin":
                     IntersectionBloomFilterJoin.intersectionBFJoin(redis1, redis2);
                     break;
+                default:
+                    throw new Exception(String.format("%s is not a known join method pick from " +
+                            "[semiJoin, pipelinedHashJoin, intersectionBloomFilterJoin] %n", joinMethod));
             }
 
             System.out.println("Execution time: " + (System.currentTimeMillis() - startTime) + " ms");
         }
         else {
-            System.out.println("You need to provide a join method through JOIN_METHOD env variable!");
+            System.out.println("To perform join you need to provide a join method through JOIN_METHOD env variable!");
         }
         redis1.close();
         redis2.close();
