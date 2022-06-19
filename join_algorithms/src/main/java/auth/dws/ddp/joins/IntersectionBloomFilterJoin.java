@@ -37,7 +37,7 @@ public class IntersectionBloomFilterJoin {
         List<String> unionOfKeys = getUnionOfKeys(keys1, keys2);
 
         // configuration of bloom filters to be created
-        // false positive prob of 3% will use 5 different Hash functions for the bloom filters
+        // we set false positive probability to 3% for the bloom filters smaller probability means more hash functions
         BloomFilterConfig bf1Config = new BloomFilterConfig(keys1.size(), 0.03f);
         BloomFilterConfig bf2Config = new BloomFilterConfig(keys2.size(), 0.03f);
         BloomFilterConfig intersectionBFConfig = new BloomFilterConfig(keys1.size()+keys2.size(), 0.03f);
